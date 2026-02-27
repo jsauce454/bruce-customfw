@@ -93,6 +93,83 @@ Replace `COMx` with your actual COM port.
 
 ---
 
+## Device Compatibility
+
+The code changes live in shared source files, so they should compile for **all Bruce-supported devices**. However, some features are hardware-dependent:
+
+**Works on all devices:**
+- Apps menu and app launcher (uses standard SD/LittleFS + JS interpreter)
+- Memory improvements (PSRAM heap uses `ps_malloc` with automatic fallback for devices without PSRAM)
+- Menu JS module (uses Bruce's native UI — fully device-agnostic)
+- BLE JS module (NimBLE is available on all ESP32 variants)
+
+**Hardware-dependent:**
+- **LED module** — Wrapped in `#ifdef HAS_RGB_LED`. Compiles on all devices but only functions on those with RGB LEDs (T-Embed CC1101, Cardputer, Bruce RF Reaper, etc.)
+- **NRF24 module** — Only useful on devices with NRF24 hardware connected
+
+**Notes:**
+- LITE_VERSION builds will **not** include any of the new features (guarded by `#if !defined(LITE_VERSION) && !defined(DISABLE_INTERPRETER)`)
+- Only the `lilygo-t-embed-cc1101` target has been built and tested so far. Other targets should work but may need testing.
+
+---
+
+## Building From Source
+
+### Prerequisites
+
+1. **Python 3.x** — https://www.python.org/downloads/
+2. **PlatformIO Core (CLI)** — Install via pip:
+   ```sh
+   pip install platformio
+   ```
+3. **GCC (for JS header generation)** — The build uses a host GCC to pre-compile JavaScript headers.
+   - **Windows:** Install MSYS2 (https://www.msys2.org/), then run `pacman -S mingw-w64-i686-gcc` in the MSYS2 terminal. The GCC will be at `C:\msys64\mingw32\bin\gcc.exe`.
+   - **Linux/macOS:** GCC is usually already installed (`gcc` in PATH).
+4. **Git** — https://git-scm.com/downloads
+
+### Clone and Build
+
+```sh
+git clone https://github.com/jsauce454/bruce-customfw.git
+cd bruce-customfw
+```
+
+**Windows (PowerShell):**
+```powershell
+$env:MQJS_HOST_CC = "C:\msys64\mingw32\bin\gcc.exe"
+pio run -e lilygo-t-embed-cc1101
+```
+
+**Linux / macOS:**
+```sh
+export MQJS_HOST_CC=gcc
+pio run -e lilygo-t-embed-cc1101
+```
+
+The output binary will be at `Bruce-lilygo-t-embed-cc1101.bin` in the project root.
+
+### Building for Other Devices
+
+Replace the `-e` target with any supported Bruce environment:
+
+```sh
+pio run -e m5stack-cardputer
+pio run -e m5stack-m5stickc-plus2
+pio run -e lilygo-t-deck
+pio run -e lilygo-t-embed
+pio run -e m5stack-core2
+```
+
+Check `platformio.ini` for the full list of available build environments.
+
+### First Build Notes
+
+- The first build takes several minutes as PlatformIO downloads all toolchains and dependencies automatically.
+- The `patch.py` pre-build script will automatically patch `libnet80211.a` (weakens a symbol to allow custom WiFi attack code). This only runs once and creates a `.patched` flag.
+- If the build fails with `cannot find -lnet80211`, delete the `.patched` file in your PlatformIO framework libs directory and rebuild.
+
+---
+
 ## Original Bruce Features
 
 This fork includes **all** features from the original Bruce firmware. See the [original README](https://github.com/BruceDevices/firmware) for the full feature list, including:
