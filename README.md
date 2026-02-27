@@ -1,37 +1,101 @@
 ![Bruce Main Menu](./media/pictures/bruce_banner.jpg)
 
-# :shark: Bruce
+# Bruce Custom Firmware — Enhanced App Platform
 
-Bruce is a versatile ESP32 firmware that supports a ton of offensive features focusing on facilitating Red Team operations.
-It also supports M5stack and Lilygo products and works great with Cardputer, Sticks, M5Cores, T-Decks and T-Embeds.
+A custom fork of the [Bruce firmware](https://github.com/BruceDevices/firmware) for the **LilyGo T-Embed CC1101**, adding a Flipper Zero-style app loading system with full hardware access and expanded memory for JavaScript apps.
 
-**Check our fully open-source hardware too:** https://bruce.computer/boards
+> **Original Bruce firmware:** https://github.com/BruceDevices/firmware
+>
+> **All credit for the base firmware goes to the [Bruce team and contributors](https://github.com/BruceDevices/firmware/graphs/contributors).** This fork builds on top of their work.
 
-## :building_construction: How to install
+---
 
-### The easiest way to install Bruce is using our official Web Flasher!
-### Check out: https://bruce.computer/flasher
+## What's New in This Fork
 
-Alternatively, you can download the latest binary from releases or actions and flash locally using esptool.py
-```sh
-esptool.py --port /dev/ttyACM0 write_flash 0x00000 Bruce-<device>.bin
+### Apps Menu
+- New **Apps** menu in the main menu
+- Automatically discovers apps from the `/apps/` directory on SD card or LittleFS
+- Each app uses a `manifest.json` to define its name, version, category, and entry point
+- Launch apps directly from the menu
+
+### Memory Improvements
+- JS interpreter heap increased from 64KB to **512KB** using PSRAM (with automatic fallback)
+- Task stack size increased from 8KB to **16KB** for more complex scripts
+
+### New JavaScript API Modules
+
+**BLE (`ble` module)**
+- `ble.scan(duration)` — Scan for nearby BLE devices, returns array of results
+- `ble.advertise(name, duration)` — Broadcast as a BLE device
+
+**NRF24 (`nrf24` module)**
+- `nrf24.begin(cePin, csnPin)` — Initialize the RF24 radio
+- `nrf24.setChannel(ch)` — Set RF channel (0–125)
+- `nrf24.openReadPipe(pipe, address)` / `nrf24.openWritePipe(address)`
+- `nrf24.startListening()` / `nrf24.stopListening()`
+- `nrf24.available()` / `nrf24.read(length)` / `nrf24.write(data)`
+
+**LED (`led` module)**
+- `led.setColor(r, g, b)` — Set RGB LED color
+- `led.setBrightness(value)` — Set brightness (0–255)
+- `led.off()` — Turn LED off
+- `led.blink(delay_ms)` — Blink once
+
+**Menu (`menu` module)**
+- `menu.show(title, options)` — Display a native Bruce menu, returns selected index
+- `menu.alert(title, message)` — Show an alert dialog
+- `menu.confirm(title, message)` — Show yes/no confirmation, returns boolean
+
+---
+
+## Creating an App
+
+1. Create a folder on your SD card under `/apps/`, e.g. `/apps/my_app/`
+2. Add a `manifest.json`:
+
+```json
+{
+  "name": "My App",
+  "description": "What my app does",
+  "entry": "main.js",
+  "category": "Tools",
+  "version": "1.0"
+}
 ```
 
-**For m5stack devices**
+3. Add your `main.js` script (or whatever you named the entry point)
 
-If you already use M5Launcher to manage your m5stack device, you can install it with OTA
+### Example App
 
-Or you can burn it directly from the [m5burner tool](https://docs.m5stack.com/en/download), just search for 'Bruce' (My official builds will be uploaded by "owner" and have photos.) on the device category you want to and click on burn
+```javascript
+// /apps/led_demo/main.js
+led.setColor(255, 0, 0);
+led.setBrightness(128);
 
+var choice = menu.show("LED Demo", ["Red", "Green", "Blue", "Off"]);
+if (choice === 0) led.setColor(255, 0, 0);
+else if (choice === 1) led.setColor(0, 255, 0);
+else if (choice === 2) led.setColor(0, 0, 255);
+else led.off();
+```
 
-## :keyboard: Discord Server
+---
 
-Contact us in our [Discord Server](https://discord.gg/WJ9XF9czVT)!
+## Flashing
 
-## :bookmark_tabs: Wiki
+Put your T-Embed CC1101 into bootloader mode (hold **BOOT**, press **RESET**, release **BOOT**), then:
 
-For more information on each function supported by Bruce, [read our wiki here](https://github.com/pr3y/Bruce/wiki).
-Also, [read our FAQ](https://github.com/pr3y/Bruce/wiki/FAQ)
+```sh
+esptool.py --chip esp32s3 --port COMx write_flash 0x0 Bruce-lilygo-t-embed-cc1101.bin
+```
+
+Replace `COMx` with your actual COM port.
+
+---
+
+## Original Bruce Features
+
+This fork includes **all** features from the original Bruce firmware. See the [original README](https://github.com/BruceDevices/firmware) for the full feature list, including:
 
 ## :computer: List of Features
 
