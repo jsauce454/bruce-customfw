@@ -159,7 +159,6 @@ jobs:
   post_compile_steps:
     name: Update Placeholders
     runs-on: ubuntu-latest
-    environment: github_release
     needs: compile_sketch
     if: (github.event_name == 'push' || github.event_name == 'workflow_dispatch') || github.ref_type == 'tag'
     steps:
@@ -284,7 +283,6 @@ jobs:
 
   create_release:
     runs-on: ubuntu-latest
-    environment: github_release
     needs: [compile_sketch]
     if: github.ref_type == 'tag'
     steps:
